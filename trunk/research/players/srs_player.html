@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SRS</title>   
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.10/shaka-player.compiled.js"></script>
+    <style>
+        body{
+            padding-top: 30px;
+        }
+        .navbar .nav>.active>a, .navbar .nav>.active>a:hover, .navbar .nav>.active>a:focus {
+            background-color: #fc943c;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<img src='https://ossrs.net/gif/v1/sls.gif?site=ossrs.net&path=/player/srsplayer'/>
+<div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+        <div class="container">
+            <div class="nav-collapse collapse">
+                <ul class="nav">
+                    <li class="active active-tab"><a id="nav_srs_player" href="srs_player.html">SRS</a></li>
+                    <li><a id="nav_rtc_player" href="rtc_player.html">RTC Player</a></li>
+                    <li><a id="nav_rtc_publisher" href="rtc_publisher.html">RTC Publisher</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+
+    <div id="main_content">
+        <div class="form-inline">
+            <div>
+                URL:
+                <input type="text" id="txt_url" class="input-xxlarge" value="">
+                <button class="btn btn-primary" id="btn_play">Play</button>
+            </div>
+            <p></p>
+            <div>
+                <video id="video_player" width="100%" autoplay controls></video>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p></p>
+        <p><a href="#">LIVESTREAM TRANSCODE &copy; 2021</a></p>
+    </footer>
+</div>
+</body>
+<script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/flv-1.5.0.min.js"></script>
+<script type="text/javascript" src="js/hls-0.14.17.min.js"></script>
+<script type="text/javascript" src="js/json2.js"></script>
+<script type="text/javascript" src="js/srs.page.js"></script>
+<script type="text/javascript" src="js/srs.log.js"></script>
+<script type="text/javascript" src="js/srs.utility.js"></script>
+<script type="text/javascript" src="js/winlin.utility.js"></script>
+<script type="text/javascript">
+    var flvPlayer = null;
+    var hlsPlayer = null;
+
+    var stopPlayers = function () {
+        if (flvPlayer) {
+            flvPlayer.destroy();
+            flvPlayer = null;
+        }
+        if (hlsPlayer) {
+            hlsPlayer.destroy();
+            hlsPlayer = null;
+        }
+    };
+
+    var hide_for_error = function () {
+        $('#main_flash_alert').show();
+        $('#main_info').hide();
+        $('#main_tips').hide();
+        $('#video_player').hide();
+        //$('#btn_play').hide();
+
+        stopPlayers();
+    };
+
+    var show_for_ok = function () {
+        $('#main_flash_alert').hide();
+        $('#main_info').show();
+        $('#main_tips').show();
+        $('#video_player').show();
+        //$('#btn_play').show();
+    };
+
+     var initShakaPlayer = () => {
+        // Install built-in polyfills to patch browser incompatibilities.
+        shaka.polyfill.installAll();
+
+        // Check to see if the browser supports the basic APIs Shaka needs.
+        if (shaka.Player.isBrowserSupported()) {
+            // Everything looks good!
+            initPlayer();
+        } else {
+            // This browser does not have the minimum set of APIs we need.
+            console.error('Browser not supported!');
+        }
+        
+    }
+      var initPlayer = async () => {
+        // Create a Player instance.
+        const video = document.getElementById('video_player');
+        const player = new shaka.Player(video);
+
+        // Attach player to the window to make it easy to access in the JS console.
+        window.player = player;
+
+        // Listen for error events.
+        player.addEventListener('error', onErrorEvent);
+
+        // Try to load a manifest.
+        // This is an asynchronous process.
+        try {
+            await player.load(apply_url_change().url);
+            show_for_ok()
+            // This runs if the asynchronous load is successful.
+            console.log('The video has now been loaded!');
+        } catch (e) {
+            // onError is executed if the asynchronous load fails.
+            onError(e);
+        }
+    }
+    var onErrorEvent = (event) => {
+        // Extract the shaka.util.Error object from the event.
+        onError(event.detail);
+    }
+
+    var onError = (error) => {
+        // Log the error.
+        console.error('Error code', error.code, 'object', error);
+    }
+    var apply_url_change = function() {
+        var r = parse_rtmp_url($("#txt_url").val());
+        if (r.server.split('.')[0] !== 'dash') {
+            var url = window.location.protocol + "//" + query.host + query.pathname + "?autostart=true"
+                + "&app=" + r.app + "&stream=" + r.stream + "&server=" + r.server + "&port=" + r.port;
+            url += (query.shp_identify) ? "&shp_identify=" + query.shp_identify : '';
+            url += (r.vhost === "__defaultVhost__") ? "&vhost=" + r.server : "&vhost=" + r.vhost;
+            url += (r.schema !== "rtmp") ? "&schema=" + r.schema : '';
+            url += (query.buffer) ? "&buffer=" + query.buffer : '';
+            url += (query.api_port) ? "&api_port=" + query.api_port : '';
+
+            var queries = user_extra_params(query);
+            queries = user_extra_params(r, queries);
+
+            if (queries && queries.length) {
+                url += '&' + queries.join('&');
+            }
+            $("#player_url").text($("#txt_url").val()).attr("href", url);
+            $("#link_url").attr("href", url);
+
+            // For RTMP, not support.
+            if (r.schema === 'rtmp') {
+                hide_for_error();
+                return;
+            }
+        }
+        return r;
+    };
+
+    var start_play = function (r) {
+        stopPlayers();
+        if (!r) return;
+
+        // Start play HTTP-FLV.
+        if (r.stream.indexOf('.flv') > 0) {
+            if (!flvjs.isSupported()) {
+                hide_for_error();
+                return;
+            }
+
+            show_for_ok();
+
+            flvPlayer = flvjs.createPlayer({type: 'flv', url: r.url});
+            flvPlayer.attachMediaElement(document.getElementById('video_player'));
+            flvPlayer.load();
+            flvPlayer.play();
+            return;
+        }
+
+        // Start play HLS.
+        if (r.stream.indexOf('.m3u8') > 0) {
+            if (!Hls.isSupported()) {
+                hide_for_error();
+                return;
+            }
+
+            show_for_ok();
+
+            hlsPlayer = new Hls();
+            hlsPlayer.loadSource(r.url);
+            hlsPlayer.attachMedia(document.getElementById('video_player'));
+            return;
+        } 
+        // Start play DASH
+        if (r.stream.indexOf('.dash')) {
+            show_for_ok();
+            initShakaPlayer()
+            return;
+        }
+        console.error('URL not supported', r.url, r);
+        $('#video_player').hide();
+    };
+
+    $("#txt_url").change(function(){
+        apply_url_change();
+    });
+
+    $("#btn_play").click(function(){
+        $('#video_player').prop('muted', false);
+        var r = apply_url_change();
+        start_play(r);
+    });
+
+    
+    /****
+     * The parameters for this page:
+     *       schema, the protocol schema, rtmp or http.
+     *       server, the ip of the url.
+     *       port, the rtmp port of url.
+     *       vhost, the vhost of url, can equals to server.
+     *       app, the app of url.
+     *       stream, the stream of url, can endwith .flv or .mp4 or nothing for RTMP.
+     *       autostart, whether auto play the stream.
+     *       buffer, the buffer time in seconds.
+     * extra params:
+     *       shp_identify, hls+ param.
+     * for example:
+     *       http://localhost:8088/players/srs_player.html?vhost=ossrs.net&app=live&stream=livestream&server=ossrs.net&port=1935&autostart=true&schema=rtmp
+     *       http://localhost:8088/players/srs_player.html?vhost=ossrs.net&app=live&stream=livestream.flv&server=ossrs.net&port=8080&autostart=true&schema=http
+     */
+    var query = parse_query_string();
+
+    // get the vhost and port to set the default url.
+    // url set to: http://localhost:8080/live/livestream.flv
+    srs_init_flv("#txt_url");
+
+    if (query.autostart === "true") {
+        $('#video_player').prop('muted', true);
+        console.warn('For autostart, we should mute it, see https://www.jianshu.com/p/c3c6944eed5a ' +
+            'or https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#audiovideo_elements');
+
+        var r = apply_url_change();
+        start_play(r);
+    } else {
+        $('#video_player').hide();
+    }
+</script>
+
+</html>
