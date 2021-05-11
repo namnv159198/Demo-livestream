@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SRS</title>   
+    <title>HTTP PLAYER</title>   
     <meta charset="utf-8">
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.10/shaka-player.compiled.js"></script>
+    <script>
+        window.muxPlayerInitTime = Date.now();
+    </script>   
     <style>
         body{
             padding-top: 30px;
@@ -22,7 +25,7 @@
         <div class="container">
             <div class="nav-collapse collapse">
                 <ul class="nav">
-                    <li class="active active-tab"><a id="nav_srs_player" href="srs_player.html">SRS</a></li>
+                    <li class="active active-tab"><a id="nav_srs_player" href="srs_player.html">HTTP Player</a></li>
                     <li><a id="nav_rtc_player" href="rtc_player.html">RTC Player</a></li>
                     <li><a id="nav_rtc_publisher" href="rtc_publisher.html">RTC Publisher</a></li>
                 </ul>
@@ -46,10 +49,10 @@
         </div>
     </div>
 
-    <footer>
+    <!-- <footer>
         <p></p>
         <p><a href="#">LIVESTREAM TRANSCODE &copy; 2021</a></p>
-    </footer>
+    </footer> -->
 </div>
 </body>
 <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
@@ -62,6 +65,37 @@
 <script type="text/javascript" src="js/srs.utility.js"></script>
 <script type="text/javascript" src="js/winlin.utility.js"></script>
 <script type="text/javascript">
+    if (typeof mux !== 'undefined') {
+        mux.monitor('#video_player', {
+        debug: false,
+        data: {
+            env_key: '4vun6ohrk3p0gg1g0933v2eq8', // required
+            // Metadata fields
+            player_name: 'Main Player', // any arbitrary string you want to use to identify this player
+            player_init_time: window.muxPlayerInitTime, // ex: 1451606400000
+            // ...
+
+             // Site Metadata
+            viewer_user_id: '12345', // ex: '12345'
+            experiment_name: 'player_test_A', // ex: 'player_test_A'
+            sub_property_id: 'cus-1', // ex: 'cus-1'
+            sub_property_id: 'cus-1', // ex: 'cus-1'
+
+            // Player Metadata
+            player_name: 'My Main Player', // ex: 'My Main Player'
+            player_version: '1.0.0', // ex: '1.0.0'
+            player_init_time: window.muxPlayerInitTime, // ex: 1451606400000
+
+            // Video Metadata
+            video_id: 'abcd123', // ex: 'abcd123'
+            video_title: 'My Great Video', // ex: 'My Great Video'
+            video_series: 'Weekly Great Videos', // ex: 'Weekly Great Videos'
+            video_duration: 120000, // in milliseconds, ex: 120000
+            video_stream_type: 'live', // 'live' or 'on-demand'
+            video_cdn: 'Akamai' // ex: 'Fastly', 'Akamai'
+        }
+     });
+    }
     var flvPlayer = null;
     var hlsPlayer = null;
 
@@ -213,6 +247,7 @@
         $('#video_player').hide();
     };
 
+    
     $("#txt_url").change(function(){
         apply_url_change();
     });
