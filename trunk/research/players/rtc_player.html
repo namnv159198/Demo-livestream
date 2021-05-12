@@ -1,142 +1,181 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>RTC PLAYER</title>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <style>
-        body{
-            padding-top: 30px;
-        }
-        .navbar .nav>.active>a, .navbar .nav>.active>a:hover, .navbar .nav>.active>a:focus {
-            background-color: #fc943c !important;
-            color: white !important;
-        }
+      body {
+        padding-top: 30px;
+      }
+      .navbar .nav > .active > a,
+      .navbar .nav > .active > a:hover,
+      .navbar .nav > .active > a:focus {
+        background-color: #fc943c !important;
+        color: white !important;
+      }
     </style>
-    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
-    <script src="https://src.litix.io/core/4/mux.js"></script>  
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
+    <script src="https://src.litix.io/core/4/mux.js"></script>
     <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
     <script type="text/javascript" src="js/adapter-7.4.0.min.js"></script>
     <script type="text/javascript" src="js/srs.sdk.js"></script>
     <script type="text/javascript" src="js/winlin.utility.js"></script>
     <script type="text/javascript" src="js/srs.page.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">    
     <script>
-        window.muxPlayerInitTime = Date.now();
-    </script>      
-</head>
-<body>
-<img src='https://ossrs.net/gif/v1/sls.gif?site=ossrs.net&path=/player/rtcplayer'/>
-<div class="navbar navbar-fixed-top">
-    <div class="navbar-inner">
-        <div class="container">
+      window.muxPlayerInitTime = Date.now();
+    </script>
+  </head>
+  <body>
+  <div id="app">
+    <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+          <div class="container">
             <div class="nav-collapse collapse">
-                <ul class="nav">
-                    <li><a id="nav_srs_player" href="srs_player.html">HTTP Player</a></li>
-                    <li class="active"><a id="nav_rtc_player" href="rtc_player.html">RTC Player</a></li>
-                    <li><a id="nav_rtc_publisher" href="rtc_publisher.html">RTC Publisher</a></li>
-                </ul>
+              <ul class="nav">
+                <li>
+                  <a id="nav_srs_player" href="srs_player.html">HTTP Player</a>
+                </li>
+                <li class="active">
+                  <a id="nav_rtc_player" href="rtc_player.html">RTC Player</a>
+                </li>
+                <li>
+                  <a id="nav_rtc_publisher" href="rtc_publisher.html"
+                    >RTC Publisher</a
+                  >
+                </li>
+              </ul>
             </div>
+          </div>
         </div>
-    </div>
-</div>
-<div class="container">
-    <div class="form-inline">
-        URL:
-        <input type="text" id="txt_url" class="input-xxlarge" value="">
-        <button class="btn btn-primary" id="btn_play">Play</button>
-    </div>
+      </div>
+      <div class="container">
+        <div class="form-inline" style="margin-top:20px">
+          URL:
+          <input type="text" id="txt_url" class="input-xxlarge" value="" v-model="url" @keyup.enter="onClickPlay"/>
+          <button class="btn btn-primary" id="btn_play" @click="onClickPlay">Play</button>
+        </div>
+  
+        <label></label>
+        <video id="rtc_media_player" width="100%" controls autoplay></video>
+        <div>
+          <i class="fa fa-eye" aria-hidden="true" id="icon_view" v-if="countViews > 0" ></i>
+          <span id="views" v-if="countViews > 0">{{ countViews }}</span>
+       </div>
+      </div>
+  </div>
+ 
+    <script
+      src="https://cdn.socket.io/3.1.3/socket.io.min.js"
+      integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+    <script type="text/javascript">
+      $(function () {
+        var sdk = null; // Global handler to do cleanup when replaying.
+        var startPlay = function () {
+          $("#rtc_media_player").show();
 
-    <label></label>
-    <video id="rtc_media_player"  width="100%"  src="https://muxed.s3.amazonaws.com/leds.mp4" controls autoplay></video>
+          // Close PC when user replay.
+          if (sdk) {
+            sdk.close();
+          }
 
-    <!-- <label></label>
-    SessionID: <span id='sessionid'></span>
+          sdk = new SrsRtcPlayerAsync();
+          sdk.onaddstream = function (event) {
+            console.log("Start play, event: ", event);
+            $("#rtc_media_player").prop("srcObject", event.stream);
+          };
 
-    <label></label>
-    Simulator: <a href='#' id='simulator-drop'>Drop</a>
+          // For example:
+          //      webrtc://r.ossrs.net/live/livestream
+          var url = $("#txt_url").val();
+          sdk
+            .play(url)
+            .then(function (session) {
+              $("#sessionid").html(session.sessionid);
+              $("#simulator-drop").attr(
+                "href",
+                session.simulator + "?drop=1&username=" + session.sessionid
+              );
+            })
+            .catch(function (reason) {
+              sdk.close();
+              $("#rtc_media_player").hide();
+              console.error(reason);
+            });
+        };
 
-    <footer>
-        <p></p>
-        <p><a href="#">LIVESTREAM TRANSCODE &copy; 2021</a></p>
-    </footer> -->
-</div>
-<script type="text/javascript">
-    if (typeof mux !== 'undefined') {
-        mux.monitor('#rtc_media_player', {
-        debug: false,
-        data: {
-            env_key: '4vun6ohrk3p0gg1g0933v2eq8', // required
-            // Metadata fields
-            player_name: 'Main Player', // any arbitrary string you want to use to identify this player
-            player_init_time: window.muxPlayerInitTime, // ex: 1451606400000
-            // ...
+        $("#rtc_media_player").hide();
+        var query = parse_query_string();
+        srs_init_rtc("#txt_url", query);
 
-             // Site Metadata
-            viewer_user_id: '12345', // ex: '12345'
-            experiment_name: 'player_test_A', // ex: 'player_test_A'
-            sub_property_id: 'cus-1', // ex: 'cus-1'
-            sub_property_id: 'cus-1', // ex: 'cus-1'
+        $("#btn_play").click(function () {
+          $("#rtc_media_player").prop("muted", false);
+          startPlay();
+        });
 
-            // Player Metadata
-            player_name: 'My Main Player', // ex: 'My Main Player'
-            player_version: '1.0.0', // ex: '1.0.0'
-            player_init_time: window.muxPlayerInitTime, // ex: 1451606400000
+        if (query.autostart === "true") {
+          $("#rtc_media_player").prop("muted", true);
+          console.warn(
+            "For autostart, we should mute it, see https://www.jianshu.com/p/c3c6944eed5a " +
+              "or https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#audiovideo_elements"
+          );
 
-            // Video Metadata
-            video_id: 'abcd123', // ex: 'abcd123'
-            video_title: 'My Great Video', // ex: 'My Great Video'
-            video_series: 'Weekly Great Videos', // ex: 'Weekly Great Videos'
-            video_duration: 120000, // in milliseconds, ex: 120000
-            video_stream_type: 'live', // 'live' or 'on-demand'
-            video_cdn: 'Akamai' // ex: 'Fastly', 'Akamai'
+          startPlay();
         }
-     });
-    }
-    // $(function(){
-    //     var sdk = null; // Global handler to do cleanup when replaying.
-    //     var startPlay = function() {
-    //         $('#rtc_media_player').show();
+        if (typeof mux !== "undefined") {
+          mux.monitor("#rtc_media_player", {
+            debug: false,
+            data: {
+              env_key: "4vun6ohrk3p0gg1g0933v2eq8", // required
+              // Metadata fields
+              player_name: "Main Player", // any arbitrary string you want to use to identify this player
+              player_init_time: window.muxPlayerInitTime, // ex: 1451606400000
+              // ...
 
-    //         // Close PC when user replay.
-    //         if (sdk) {
-    //             sdk.close();
-    //         }
+              // Site Metadata
+              viewer_user_id: "12345", // ex: '12345'
+              experiment_name: "player_test_A", // ex: 'player_test_A'
+              sub_property_id: "cus-1", // ex: 'cus-1'
+              sub_property_id: "cus-1", // ex: 'cus-1'
 
-    //         sdk = new SrsRtcPlayerAsync();
-    //         sdk.onaddstream = function (event) {
-    //             console.log('Start play, event: ', event);
-    //             $('#rtc_media_player').prop('srcObject', event.stream);
-    //         };
+              // Player Metadata
+              player_name: "My Main Player", // ex: 'My Main Player'
+              player_version: "1.0.0", // ex: '1.0.0'
+              player_init_time: window.muxPlayerInitTime, // ex: 1451606400000
 
-    //         // For example:
-    //         //      webrtc://r.ossrs.net/live/livestream
-    //         var url = $("#txt_url").val();
-    //         sdk.play(url).then(function(session){
-    //             $('#sessionid').html(session.sessionid);
-    //             $('#simulator-drop').attr('href', session.simulator + '?drop=1&username=' + session.sessionid);
-    //         }).catch(function (reason) {
-    //             sdk.close();
-    //             $('#rtc_media_player').hide();
-    //             console.error(reason);
-    //         });
-    //     };
-
-    //     $('#rtc_media_player').hide();
-    //     var query = parse_query_string();
-    //     srs_init_rtc("#txt_url", query);
-
-    //     $("#btn_play").click(function() {
-    //         $('#rtc_media_player').prop('muted', false);
-    //         startPlay();
-    //     });
-
-    //     if (query.autostart === 'true') {
-    //         $('#rtc_media_player').prop('muted', true);
-    //         console.warn('For autostart, we should mute it, see https://www.jianshu.com/p/c3c6944eed5a ' +
-    //             'or https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#audiovideo_elements');
-
-    //         startPlay();
-    //     }
-    // });
-</script>
-</body>
+              // Video Metadata
+              video_id: "abcd123", // ex: 'abcd123'
+              video_title: "My Great Video", // ex: 'My Great Video'
+              video_series: "Weekly Great Videos", // ex: 'Weekly Great Videos'
+              video_duration: 120000, // in milliseconds, ex: 120000
+              video_stream_type: "live", // 'live' or 'on-demand'
+              video_cdn: "Akamai", // ex: 'Fastly', 'Akamai'
+            },
+          });
+        }
+        new Vue({
+          el: "#app",
+          data: {
+            url: "",
+            countViews: 0,
+          },
+          methods: {
+            socketIO(r) {
+              const socket = io(r);
+              socket.on("count", (count) => {
+                count > 0 ?  this.countViews = count : this.countViews = 0
+              });
+            },
+            onClickPlay() {
+              this.socketIO(this.url);
+              startPlay();
+            },
+          }
+        });
+      });
+    </script>
+  </body>
 </html>
