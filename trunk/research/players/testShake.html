@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
+    <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"
+        integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh"
+        crossorigin="anonymous"></script>
+    <!-- Shaka Player ui compiled library: -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.7/shaka-player.ui.min.js"
+        integrity="sha512-KpD7UW8aOliftdEvclj0KBnwh6vKS708SS41xCNr11yjCSAcYxb4+tlaQTfK+GDw2VCv2DxiM2Zu1d3+WqXw+g=="
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.7/controls.min.css"
+        integrity="sha512-XLwXArwaPbtdmlcbaeNgSF3cBB4Q7T7ptfhEfpkDIc/gkvKk8S413yzTByJ7X9dgOZR/T7NxrQI0HE4hlc+2GQ=="
+        crossorigin="anonymous" />
+    <!-- Chromecast SDK (if you want Chromecast support for your app): -->
+    <script defer src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
+    <script src="https://github.com/videojs/mux.js/releases/download/v5.0.0/mux.js"></script>
+    <script>
+        window.muxPlayerInitTime = Date.now();
+    </script>
+    <style>
+        body {
+            padding-top: 30px;
+        }
+
+        .navbar .nav>.active>a,
+        .navbar .nav>.active>a:hover,
+        .navbar .nav>.active>a:focus {
+            background-color: #fc943c;
+            color: white;
+        }
+    </style>
+    <!-- Your application source: -->
+</head>
+
+<body>
+    <div id="app">
+        <img src="https://ossrs.net/gif/v1/sls.gif?site=ossrs.net&path=/player/srsplayer" />
+        <div class="navbar navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li class="active active-tab">
+                                <a id="nav_srs_player" href="srs_player.html">HTTP Player</a>
+                            </li>
+                            <li>
+                                <a id="nav_rtc_player" href="rtc_player.html">RTC Player</a>
+                            </li>
+                            <li>
+                                <a id="nav_rtc_publisher" href="rtc_publisher.html">RTC Publisher</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div id="main_content">
+                <div class="form-inline">
+                    <div>
+                        URL:
+                        <input type="text" id="txt_url" class="input-xxlarge" value="" v-model="url"
+                            @keyup.enter="onClickPlay" />
+                        <button class="btn btn-primary" id="btn_play" @click="onClickPlay">
+                            Play
+                        </button>
+                    </div>
+                    <p></p>
+                    <div>
+                        <div data-shaka-player-container style="max-width: 40em"
+                            data-shaka-player-cast-receiver-id="930DEB06">
+                            <!-- The data-shaka-player tag will make the UI library use this video element.
+                          If no video is provided, the UI will automatically make one inside the container div. -->
+                            <video autoplay data-shaka-player id="video" style="width: 100%; height: 100%"></video>
+                        </div>
+                        <div>
+                            <i aria-hidden="true" id="icon_view" v-if="countViews > 0"></i>
+                            <span id="views" v-if="countViews > 0">{{ countViews }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+<script>
+    const manifestUri =
+        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+    // 'media/stream/0b97b1ef-a193-4ce7-8a0f-bca5a927a0f9.mpd';
+
+    async function init() {
+        shaka.polyfill.installAll();
+        // When using the UI, the player is made automatically by the UI object.
+        const video = document.getElementById("video");
+        const ui = video["ui"];
+        const controls = ui.getControls();
+        const player = controls.getPlayer();
+
+        // Attach player and ui to the window to make it easy to access in the JS console.
+        window.player = player;
+        window.ui = ui;
+
+        // Listen for error events.
+        player.addEventListener("error", onPlayerErrorEvent);
+        controls.addEventListener("error", onUIErrorEvent);
+
+        // Try to load a manifest.
+        // This is an asynchronous process.
+        try {
+            await player.load(manifestUri);
+            // This runs if the asynchronous load is successful.
+            console.log("The video has now been loaded!");
+        } catch (error) {
+            onPlayerError(error);
+        }
+    }
+
+    function onPlayerErrorEvent(errorEvent) {
+        // Extract the shaka.util.Error object from the event.
+        onPlayerError(event.detail);
+    }
+
+    function onPlayerError(error) {
+        // Handle player error
+        console.error("Error code", error.code, "object", error);
+    }
+
+    function onUIErrorEvent(errorEvent) {
+        // Extract the shaka.util.Error object from the event.
+        onPlayerError(event.detail);
+    }
+
+    function initFailed(errorEvent) {
+        // Handle the failure to load; errorEvent.detail.reasonCode has a
+        // shaka.ui.FailReasonCode describing why.
+        console.error("Unable to load the UI library!");
+    }
+
+    // Listen to the custom shaka-ui-loaded event, to wait until the UI is loaded.
+    document.addEventListener("shaka-ui-loaded", init);
+    // Listen to the custom shaka-ui-load-failed event, in case Shaka Player fails
+    // to load (e.g. due to lack of browser support).
+    document.addEventListener("shaka-ui-load-failed", initFailed);
+</script>
