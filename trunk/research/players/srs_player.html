@@ -27,24 +27,19 @@
             background-color: #fc943c;
             color: white;
         }
+        .nav  {
+            display: flex;
+        }
     </style>
 </head>
 <body>
 <div id="app">
     <img src='https://ossrs.net/gif/v1/sls.gif?site=ossrs.net&path=/player/srsplayer'/>
-    <div class="navbar navbar-fixed-top">
-        <div class="navbar-inner">
-            <div class="container">
-                <div class="nav-collapse collapse">
-                    <ul class="nav">
-                        <li class="active active-tab"><a id="nav_srs_player" href="srs_player.html">HTTP Player</a></li>
-                        <li><a id="nav_rtc_player" href="rtc_player.html">RTC Player</a></li>
-                        <li><a id="nav_rtc_publisher" href="rtc_publisher.html">RTC Publisher</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
+    <ul class="topnav">
+        <li><a href="srs_player.html">HTTP Player</a></li>
+        <li><a class="active" href="rtc_player.html">RTC Player</a></li>
+        <li><a href="rtc_publisher.html">RTC Publisher</a></li>
+    </ul>
     <div class="container">
         <div id="main_content">
             <div class="form-inline">
@@ -54,8 +49,8 @@
                     <button  class="btn btn-primary" id="btn_play">Play</button>
                 </div>
                 <p></p>
-                <div>
-                    <video id="video_player" width="120%" autoplay controls ></video>
+                <div style="width:500px">
+                    <video id="video_player" width="100%" autoplay controls  poster="https://shaka-player-demo.appspot.com/assets/poster.jpg"></video>
                     <div>
                         <span>Số lượng người xem : </span>
                         <i class="fa fa-eye" aria-hidden="true" id="icon_view" v-if="countViews > 0" ></i>

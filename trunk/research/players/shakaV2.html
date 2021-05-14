@@ -1,0 +1,132 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Shaka Player DNA Wrapper</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="css/stylePlayer.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Builds SHAKA PLAYER -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.10/shaka-player.compiled.js"
+        integrity="sha512-HrgtP3BYUxMkei7p7iV5uW0eYNJ0/kV7Rl2ADTG9Hd2izWtYP9tza6kt5g3FKcr3zIZ0CzW0y9RB8VS1Lf0T7Q=="
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.10/shaka-player.ui.js"
+        integrity="sha512-w5PRy0q5uFkxDfbPSSuZVPpO4zOo5LVcj3tWwy67g1JJ62xmWhEPJjdFKoyNEC7DQn4BTMHR2nId5SnoInbKoQ=="
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.10/controls.min.css"
+        integrity="sha512-e+IKZFcNqsHdoUu9677IxSRnHlwJmYNpEXsRBUxvtxQJZQpCwIZS3nHcjyBQqd1zlmvUpp+Ymj8D4OclDlQDZg=="
+        crossorigin="anonymous" />
+    <script defer src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
+    <script src="https://github.com/videojs/mux.js/releases/download/v5.0.0/mux.js"></script>
+    <!-- MUX DATA -->
+    <script src="https://src.litix.io/core/4/mux.js"></script>
+    <script>
+        window.muxPlayerInitTime = Date.now();
+     </script>
+
+<body>
+    <div id="app">
+        <ul class="topnav">
+            <li><a class="active" href="shakaV2.html">HTTP Player</a></li>
+            <li><a href="rtc_player.html">RTC Player</a></li>
+            <li><a href="rtc_publisher.html">RTC Publisher</a></li>
+        </ul>
+        <div class="container">
+            <div id="main_content">
+                <div class="form-inline">
+                    <div class="form">
+                        <div style="display: flex;align-items: center;margin-right: 20px;">URL:</div>
+                        <input type="text" id="txt_url" class="input-xxlarge" value="" v-model="query.url" @key.enter="onClickPlay"
+                            style="width: 330px;">
+                        <button class="btn btn-primary" id="btn_play" style="margin-left: 20px;" type="button" @click="onClickPlay">
+                            <span>Play</span>
+                        </button>
+                    </div>
+                    <p></p>
+                    <div class="video_play" v-if="query.url">
+                        <div data-shaka-player-container id="video-container">
+                            <video data-shaka-playe autoplay muted id="video_player" width="100%"
+                                poster="https://shaka-player-demo.appspot.com/assets/poster.jpg"></video>
+                        </div>
+                        <div  v-if="countViews > 0">
+                            <i class="fa fa-eye" aria-hidden="true" id="icon_view"></i>
+                            <span id="views"> &nbsp; {{ countViews }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+<script type="text/javascript">
+    var start_play = function(query){
+        var video = document.getElementById('video_player');
+        var playerContainer = document.getElementById('video-container');
+        var player = new shaka.Player(video);
+        var ui = new shaka.ui.Overlay(player, playerContainer, video);
+        var controls = ui.getControls();
+        var playerConfig = {
+            streaming: {
+                bufferingGoal: 30,
+            }
+        };
+        player.configure(playerConfig);
+        player.load(query.url);
+    }
+    
+
+    const vm = new Vue({
+        el: "#app",
+        data: {
+            query : {
+                url: "",
+                room:""
+            },
+            countViews: 0
+        },
+        methods: {
+            onClickPlay(){
+                start_play(this.query)
+                muxFunction()
+            }
+        },
+    })
+
+    var muxFunction = function () {
+        if (typeof mux !== 'undefined') {
+            console.log(123)
+            mux.monitor('#video_player', {
+                debug: false,
+                data: {
+                    env_key: '4vun6ohrk3p0gg1g0933v2eq8', // required
+                    // Metadata fields
+                    player_name: 'Main Player', // any arbitrary string you want to use to identify this player
+                    player_init_time: window.muxPlayerInitTime, // ex: 1451606400000
+                    // ...
+
+                    // Site Metadata
+                    viewer_user_id: '12345', // ex: '12345'
+                    experiment_name: 'player_test_A', // ex: 'player_test_A'
+                    sub_property_id: 'cus-1', // ex: 'cus-1'
+                    sub_property_id: 'cus-1', // ex: 'cus-1'
+
+                    // Player Metadata
+                    player_name: 'My Main Player', // ex: 'My Main Player'
+                    player_version: '1.0.0', // ex: '1.0.0'
+                    player_init_time: window.muxPlayerInitTime, // ex: 1451606400000
+
+                    // Video Metadata
+                    video_id: 'abcd123', // ex: 'abcd123'
+                    video_title: 'My Great Video', // ex: 'My Great Video'
+                    video_series: 'Weekly Great Videos', // ex: 'Weekly Great Videos'
+                    video_duration: 120000, // in milliseconds, ex: 120000
+                    video_stream_type: 'live', // 'live' or 'on-demand'
+                    video_cdn: 'Akamai' // ex: 'Fastly', 'Akamai'
+                }
+            });
+        }
+    }
+</script>
+
+</html>
