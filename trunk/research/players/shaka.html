@@ -22,7 +22,12 @@
     <script src="https://src.litix.io/core/4/mux.js"></script>
     <script>
         window.muxPlayerInitTime = Date.now();
-     </script>
+    </script>
+    <!-- SOCKET-->
+    <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"
+        integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh"
+        crossorigin="anonymous"></script>
+
 
 <body>
     <div id="app">
@@ -36,9 +41,10 @@
                 <div class="form-inline">
                     <div class="form">
                         <div style="display: flex;align-items: center;margin-right: 20px;">URL:</div>
-                        <input type="text" id="txt_url" class="input-xxlarge" value="" v-model="query.url" @key.enter="onClickPlay"
-                            style="width: 330px;">
-                        <button class="btn btn-primary" id="btn_play" style="margin-left: 20px;" type="button" @click="onClickPlay">
+                        <input type="text" id="txt_url" class="input-xxlarge" value="" v-model="query.url"
+                            @key.enter="onClickPlay" style="width: 330px;">
+                        <button class="btn btn-primary" id="btn_play" style="margin-left: 20px;" type="button"
+                            @click="onClickPlay">
                             <span>Play</span>
                         </button>
                     </div>
@@ -48,7 +54,7 @@
                             <video data-shaka-playe autoplay muted id="video_player" width="100%"
                                 poster="https://shaka-player-demo.appspot.com/assets/poster.jpg"></video>
                         </div>
-                        <div  v-if="countViews > 0">
+                        <div v-if="countViews > 0">
                             <i class="fa fa-eye" aria-hidden="true" id="icon_view"></i>
                             <span id="views"> &nbsp; {{ countViews }}</span>
                         </div>
@@ -60,7 +66,9 @@
 </body>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
 <script type="text/javascript">
-    var start_play = function(query){
+    var queryParams = { url : "" , room: "" }
+    var urlCurrent = window.location 
+    var start_play = async function (query) {
         var video = document.getElementById('video_player');
         var playerContainer = document.getElementById('video-container');
         var player = new shaka.Player(video);
@@ -72,30 +80,45 @@
             }
         };
         player.configure(playerConfig);
-        player.load(query.url);
+        await player.load(query.url);
     }
-    
+
+    var getQueryParams = function () {
+        let objQueryParams = Object.fromEntries(new URLSearchParams(window.location.search));
+        objQueryParams.url ? queryParams.url = objQueryParams.url : queryParams.url = ""
+        objQueryParams.room ? queryParams.room = objQueryParams.room : queryParams.room = ""
+        return queryParams
+    }
+
+    var converStringUrl = function (url) {
+        return url.replace(':', '%3A')
+                   .replace('/','%2F')     
+    }
 
     const vm = new Vue({
         el: "#app",
         data: {
-            query : {
-                url: "",
-                room:""
+            query: {
+                url:  getQueryParams().url  ? getQueryParams().url : "",
+                room: getQueryParams().room  ? getQueryParams().room : 12
             },
             countViews: 0
         },
         methods: {
-            onClickPlay(){
+            onClickPlay() {
                 start_play(this.query)
                 muxFunction()
+                const url_current = new URL(window.location);
+                url_current.searchParams.set('url', this.query.url);
+                url_current.searchParams.set('room',this.query.room);
+                window.history.pushState({}, '', url_current);
+                SocketIO(this.query)
             }
         },
     })
 
     var muxFunction = function () {
         if (typeof mux !== 'undefined') {
-            console.log(123)
             mux.monitor('#video_player', {
                 debug: false,
                 data: {
@@ -127,6 +150,22 @@
             });
         }
     }
+
+    var SocketIO = function (query) {
+        const socket = io("ws://dev-livestream.gviet.vn", {
+            query: {
+                room: query.room
+            }
+        })
+        socket.on("count", (count) => {
+            count > 0 ? vm.countViews = count : vm.countViews = 0
+        });
+    }
+
+    if (urlCurrent.search) {
+        vm.onClickPlay()
+    }
+
 </script>
 
 </html>

@@ -1,143 +1,87 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+
 <head>
-    <title>HTTP PLAYER</title>   
-    <meta charset="utf-8">
-    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
-    <script src="https://cdn.socket.io/3.1.3/socket.io.min.js" integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">  
-     <!-- Shaka Player ui compiled library: -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.7/shaka-player.ui.min.js"
-        integrity="sha512-KpD7UW8aOliftdEvclj0KBnwh6vKS708SS41xCNr11yjCSAcYxb4+tlaQTfK+GDw2VCv2DxiM2Zu1d3+WqXw+g=="
+    <title>Shaka Player DNA Wrapper</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="css/stylePlayer.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Builds SHAKA PLAYER -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.10/shaka-player.compiled.js"
+        integrity="sha512-HrgtP3BYUxMkei7p7iV5uW0eYNJ0/kV7Rl2ADTG9Hd2izWtYP9tza6kt5g3FKcr3zIZ0CzW0y9RB8VS1Lf0T7Q=="
         crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.7/controls.min.css"
-        integrity="sha512-XLwXArwaPbtdmlcbaeNgSF3cBB4Q7T7ptfhEfpkDIc/gkvKk8S413yzTByJ7X9dgOZR/T7NxrQI0HE4hlc+2GQ=="
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.10/shaka-player.ui.js"
+        integrity="sha512-w5PRy0q5uFkxDfbPSSuZVPpO4zOo5LVcj3tWwy67g1JJ62xmWhEPJjdFKoyNEC7DQn4BTMHR2nId5SnoInbKoQ=="
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.10/controls.min.css"
+        integrity="sha512-e+IKZFcNqsHdoUu9677IxSRnHlwJmYNpEXsRBUxvtxQJZQpCwIZS3nHcjyBQqd1zlmvUpp+Ymj8D4OclDlQDZg=="
         crossorigin="anonymous" />
-    <!-- Chromecast SDK (if you want Chromecast support for your app): -->
     <script defer src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
     <script src="https://github.com/videojs/mux.js/releases/download/v5.0.0/mux.js"></script>
+    <!-- MUX DATA -->
+    <script src="https://src.litix.io/core/4/mux.js"></script>
     <script>
         window.muxPlayerInitTime = Date.now();
-    </script>   
-    <style>
-        body{
-            padding-top: 30px;
-        }
-        .navbar .nav>.active>a, .navbar .nav>.active>a:hover, .navbar .nav>.active>a:focus {
-            background-color: #fc943c;
-            color: white;
-        }
-        .nav  {
-            display: flex;
-        }
-    </style>
-</head>
+    </script>
+    <!-- SOCKET-->
+    <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"
+        integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh"
+        crossorigin="anonymous"></script>
+
+
 <body>
-<div id="app">
-    <img src='https://ossrs.net/gif/v1/sls.gif?site=ossrs.net&path=/player/srsplayer'/>
-    <ul class="topnav">
-        <li><a href="srs_player.html">HTTP Player</a></li>
-        <li><a class="active" href="rtc_player.html">RTC Player</a></li>
-        <li><a href="rtc_publisher.html">RTC Publisher</a></li>
-    </ul>
-    <div class="container">
-        <div id="main_content">
-            <div class="form-inline">
-                <div>
-                    URL:
-                    <input type="text" id="txt_url" class="input-xxlarge" value="" v-model="url">
-                    <button  class="btn btn-primary" id="btn_play">Play</button>
-                </div>
-                <p></p>
-                <div style="width:500px">
-                    <video id="video_player" width="100%" autoplay controls  poster="https://shaka-player-demo.appspot.com/assets/poster.jpg"></video>
-                    <div>
-                        <span>Số lượng người xem : </span>
-                        <i class="fa fa-eye" aria-hidden="true" id="icon_view" v-if="countViews > 0" ></i>
-                        <span id="views" v-if="countViews > 0"> &nbsp; 3</span>
+    <div id="app">
+        <ul class="topnav">
+            <li><a class="active" href="srs_player.html">HTTP Player</a></li>
+            <li><a href="rtc_player.html">RTC Player</a></li>
+            <li><a href="rtc_publisher.html">RTC Publisher</a></li>
+        </ul>
+        <div class="container">
+            <div id="main_content">
+                <div class="form-inline">
+                    <div class="form">
+                        <div style="display: flex;align-items: center;margin-right: 20px;">URL:</div>
+                        <input type="text" id="txt_url" class="input-xxlarge" value="" v-model="query.url"
+                            @key.enter="onClickPlay" style="width: 330px;">
+                        <button class="btn btn-primary" id="btn_play" style="margin-left: 20px;" type="button"
+                            @click="onClickPlay">
+                            <span>Play</span>
+                        </button>
+                    </div>
+                    <p></p>
+                    <div class="video_play" v-if="query.url">
+                        <div data-shaka-player-container id="video-container">
+                            <video data-shaka-playe autoplay muted id="video_player" width="100%"
+                                poster="https://shaka-player-demo.appspot.com/assets/poster.jpg"></video>
+                        </div>
+                        <div v-if="countViews > 0">
+                            <i class="fa fa-eye" aria-hidden="true" id="icon_view"></i>
+                            <span id="views"> &nbsp; {{ countViews }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 </body>
-<script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
-<script type="text/javascript" src="js/bootstrap.min.js"></script>
-<script type="text/javascript" src="js/flv-1.5.0.min.js"></script>
-<script type="text/javascript" src="js/hls-0.14.17.min.js"></script>
-<script type="text/javascript" src="js/json2.js"></script>
-<script type="text/javascript" src="js/srs.page.js"></script>
-<script type="text/javascript" src="js/srs.log.js"></script>
-<script type="text/javascript" src="js/srs.utility.js"></script>
-<script type="text/javascript" src="js/winlin.utility.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
 <script type="text/javascript">
-    if (typeof mux !== 'undefined') {
-        mux.monitor('#video_player', {
-        debug: false,
-        data: {
-            env_key: '4vun6ohrk3p0gg1g0933v2eq8', // required
-            // Metadata fields
-            player_name: 'Main Player', // any arbitrary string you want to use to identify this player
-            player_init_time: window.muxPlayerInitTime, // ex: 1451606400000
-            // ...
-
-             // Site Metadata
-            viewer_user_id: '12345', // ex: '12345'
-            experiment_name: 'player_test_A', // ex: 'player_test_A'
-            sub_property_id: 'cus-1', // ex: 'cus-1'
-            sub_property_id: 'cus-1', // ex: 'cus-1'
-
-            // Player Metadata
-            player_name: 'My Main Player', // ex: 'My Main Player'
-            player_version: '1.0.0', // ex: '1.0.0'
-            player_init_time: window.muxPlayerInitTime, // ex: 1451606400000
-
-            // Video Metadata
-            video_id: 'abcd123', // ex: 'abcd123'
-            video_title: 'My Great Video', // ex: 'My Great Video'
-            video_series: 'Weekly Great Videos', // ex: 'Weekly Great Videos'
-            video_duration: 120000, // in milliseconds, ex: 120000
-            video_stream_type: 'live', // 'live' or 'on-demand'
-            video_cdn: 'Akamai' // ex: 'Fastly', 'Akamai'
-        }
-     });
-    }
-    var flvPlayer = null;
-    var hlsPlayer = null;
-    var urlCurrent = window.location
     var queryParams = { url : "" , room: "" }
-
-    var stopPlayers = function () {
-        if (flvPlayer) {
-            flvPlayer.destroy();
-            flvPlayer = null;
-        }
-        if (hlsPlayer) {
-            hlsPlayer.destroy();
-            hlsPlayer = null;
-        }
-    };
-
-
-    var hide_for_error = function () {
-        $('#main_flash_alert').show();
-        $('#main_info').hide();
-        $('#main_tips').hide();
-        $('#video_player').hide();
-        //$('#btn_play').hide();
-        stopPlayers();
-    };
-
-    var show_for_ok = function () {
-        $('#main_flash_alert').hide();
-        $('#main_info').show();
-        $('#main_tips').show();
-        $('#video_player').show();
-        $('#icon_view').show();
-        //$('#btn_play').show();
-    };
+    var urlCurrent = window.location 
+    var start_play = async function (query) {
+        var video = document.getElementById('video_player');
+        var playerContainer = document.getElementById('video-container');
+        var player = new shaka.Player(video);
+        var ui = new shaka.ui.Overlay(player, playerContainer, video);
+        var controls = ui.getControls();
+        var playerConfig = {
+            streaming: {
+                bufferingGoal: 30,
+            }
+        };
+        player.configure(playerConfig);
+        await player.load(query.url);
+    }
 
     var getQueryParams = function () {
         let objQueryParams = Object.fromEntries(new URLSearchParams(window.location.search));
@@ -146,211 +90,81 @@
         return queryParams
     }
 
-    // var socketIO = function (query) {
-    //     const socket = io(query.url , {
-    //         query : {
-    //             room : query.room
-    //         }
-    //     });
-    //     socket.on("count", (count) => {
-    //         count > 0 ? vm.countViews = count :  vm.countViews = 0
-    //     });
-    // }
-     var initShakaPlayer = () => {
-        // Install built-in polyfills to patch browser incompatibilities.
-        shaka.polyfill.installAll();
-
-        // Check to see if the browser supports the basic APIs Shaka needs.
-        if (shaka.Player.isBrowserSupported()) {
-            // Everything looks good!
-            initPlayer();
-        } else {
-            // This browser does not have the minimum set of APIs we need.
-            console.error('Browser not supported!');
-        }
-        
-    }
-      var initPlayer = async () => {
-         // When using the UI, the player is made automatically by the UI object.
-         const video = document.getElementById("video_player");
-        const ui = video["ui"];
-        const controls = ui.getControls();
-        const player = controls.getPlayer();
-
-        // Attach player and ui to the window to make it easy to access in the JS console.
-        window.player = player;
-        window.ui = ui;
-
-        // Listen for error events.
-        player.addEventListener("error", onPlayerErrorEvent);
-        controls.addEventListener("error", onUIErrorEvent);
-
-        // Try to load a manifest.
-        // This is an asynchronous process.
-        try {
-            await player.load(apply_url_change().url);
-            // This runs if the asynchronous load is successful.
-            console.log("The video has now been loaded!");
-        } catch (error) {
-            onPlayerError(error);
-        }
-    }
-    var onErrorEvent = (event) => {
-        // Extract the shaka.util.Error object from the event.
-        onError(event.detail);
+    var converStringUrl = function (url) {
+        return url.replace(':', '%3A')
+                   .replace('/','%2F')     
     }
 
-    var onError = (error) => {
-        // Log the error.
-        console.error('Error code', error.code, 'object', error);
-    }
-    var apply_url_change = function() {
-        var r = parse_rtmp_url($("#txt_url").val());
-        var url = window.location.protocol + "//" + query.host + query.pathname + "?autostart=true"
-                + "&app=" + r.app + "&stream=" + r.stream + "&server=" + r.server + "&port=" + r.port;
-            url += (query.shp_identify) ? "&shp_identify=" + query.shp_identify : '';
-            url += (r.vhost === "__defaultVhost__") ? "&vhost=" + r.server : "&vhost=" + r.vhost;
-            url += (r.schema !== "rtmp") ? "&schema=" + r.schema : '';
-            url += (query.buffer) ? "&buffer=" + query.buffer : '';
-            url += (query.api_port) ? "&api_port=" + query.api_port : '';
-
-            var queries = user_extra_params(query);
-            queries = user_extra_params(r, queries);
-
-            if (queries && queries.length) {
-                url += '&' + queries.join('&');
-            }
-            $("#player_url").text($("#txt_url").val()).attr("href", url);
-            $("#link_url").attr("href", url);
-
-            // For RTMP, not support.
-            if (r.schema === 'rtmp') {
-                hide_for_error();
-                return;
-        }
-        return r;
-    };
-
-    var start_play = function (r) {
-        stopPlayers();
-        if (!r) return;
-        // Start play HTTP-FLV.
-        if (r.stream.indexOf('.flv') > 0) {
-            if (!flvjs.isSupported()) {
-                hide_for_error();
-                return;
-            }
-
-            show_for_ok();
-
-            flvPlayer = flvjs.createPlayer({type: 'flv', url: r.url});
-            flvPlayer.attachMediaElement(document.getElementById('video_player'));
-            flvPlayer.load();
-            flvPlayer.play();
-            initShakaPlayer()
-            return;
-        }
-
-        // Start play HLS.
-        if (r.stream.indexOf('.m3u8') > 0) {
-            if (!Hls.isSupported()) {
-                hide_for_error();
-                return;
-            }
-
-            show_for_ok();
-
-            hlsPlayer = new Hls();
-            hlsPlayer.loadSource(r.url);
-            hlsPlayer.attachMedia(document.getElementById('video_player'));
-            hlsPlayer.play()
-            initShakaPlayer()
-            return;
-        } 
-        // Start play DASH
-        if (r.stream.indexOf('.dash')) {
-            show_for_ok();
-            initShakaPlayer()
-            return;
-        }
-        console.error('URL not supported', r.url, r);
-        $('#video_player').hide();
-    };
-
-    
-    $("#txt_url").change(function(){
-        apply_url_change();
-    });
-
-    $("#btn_play").click(function(){
-        $('#video_player').prop('muted', false);
-        var r = apply_url_change();
-        start_play(r);
-    });
-
-
-    /****
-     * The parameters for this page:
-     *       schema, the protocol schema, rtmp or http.
-     *       server, the ip of the url.
-     *       port, the rtmp port of url.
-     *       vhost, the vhost of url, can equals to server.
-     *       app, the app of url.
-     *       stream, the stream of url, can endwith .flv or .mp4 or nothing for RTMP.
-     *       autostart, whether auto play the stream.
-     *       buffer, the buffer time in seconds.
-     * extra params:
-     *       shp_identify, hls+ param.
-     * for example:
-     *       http://localhost:8088/players/srs_player.html?vhost=ossrs.net&app=live&stream=livestream&server=ossrs.net&port=1935&autostart=true&schema=rtmp
-     *       http://localhost:8088/players/srs_player.html?vhost=ossrs.net&app=live&stream=livestream.flv&server=ossrs.net&port=8080&autostart=true&schema=http
-     */
-    var query = parse_query_string();
-
-    // get the vhost and port to set the default url.
-    // url set to: http://localhost:8080/live/livestream.flv
-    // srs_init_flv("#txt_url");
-
-    if (query.autostart === "true") {
-        $('#video_player').prop('muted', true);
-        console.warn('For autostart, we should mute it, see https://www.jianshu.com/p/c3c6944eed5a ' +
-            'or https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#audiovideo_elements');
-
-        var r = apply_url_change();
-        start_play(r);
-    } else {
-        $('#video_player').hide();
-    }
-
-    var vm = new Vue({
+    const vm = new Vue({
         el: "#app",
         data: {
-            url: '',
-            countViews : 3
+            query: {
+                url:  getQueryParams().url  ? getQueryParams().url : "",
+                room: getQueryParams().room  ? getQueryParams().room : 12
+            },
+            countViews: 0
         },
         methods: {
             onClickPlay() {
-                var r = apply_url_change();
-                const queryParams = {
-                    url: this.url,
-                    room : getQueryParams().room ? getQueryParams().room : ""
-                }
-                socketIO(queryParams)
-                start_play(r);
+                start_play(this.query)
+                muxFunction()
                 const url_current = new URL(window.location);
-                url_current.searchParams.set('url', new String(this.url));
-                url_current.searchParams.set('room', getQueryParams().room ? getQueryParams().room : "");
+                url_current.searchParams.set('url', this.query.url);
+                url_current.searchParams.set('room',this.query.room);
                 window.history.pushState({}, '', url_current);
+                SocketIO(this.query)
             }
         },
     })
 
-    // if (urlCurrent.search) {
-    //     vm.url = getQueryParams().url
-    //     window.onload = function(){
-    //         document.getElementById('btn_play').click()
-    //     };
-    // }
+    var muxFunction = function () {
+        if (typeof mux !== 'undefined') {
+            mux.monitor('#video_player', {
+                debug: false,
+                data: {
+                    env_key: '4vun6ohrk3p0gg1g0933v2eq8', // required
+                    // Metadata fields
+                    player_name: 'Main Player', // any arbitrary string you want to use to identify this player
+                    player_init_time: window.muxPlayerInitTime, // ex: 1451606400000
+                    // ...
+
+                    // Site Metadata
+                    viewer_user_id: '12345', // ex: '12345'
+                    experiment_name: 'player_test_A', // ex: 'player_test_A'
+                    sub_property_id: 'cus-1', // ex: 'cus-1'
+                    sub_property_id: 'cus-1', // ex: 'cus-1'
+
+                    // Player Metadata
+                    player_name: 'My Main Player', // ex: 'My Main Player'
+                    player_version: '1.0.0', // ex: '1.0.0'
+                    player_init_time: window.muxPlayerInitTime, // ex: 1451606400000
+
+                    // Video Metadata
+                    video_id: 'abcd123', // ex: 'abcd123'
+                    video_title: 'My Great Video', // ex: 'My Great Video'
+                    video_series: 'Weekly Great Videos', // ex: 'Weekly Great Videos'
+                    video_duration: 120000, // in milliseconds, ex: 120000
+                    video_stream_type: 'live', // 'live' or 'on-demand'
+                    video_cdn: 'Akamai' // ex: 'Fastly', 'Akamai'
+                }
+            });
+        }
+    }
+
+    var SocketIO = function (query) {
+        const socket = io("ws://dev-livestream.gviet.vn", {
+            query: {
+                room: query.room
+            }
+        })
+        socket.on("count", (count) => {
+            count > 0 ? vm.countViews = count : vm.countViews = 0
+        });
+    }
+
+    if (urlCurrent.search) {
+        vm.onClickPlay()
+    }
 
 </script>
 
